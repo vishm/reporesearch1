@@ -48,7 +48,9 @@ It can be sean that the mean value of steps take is `r meansteps` whilst the med
 
 ###What is the average daily activity pattern?
 
-```{r calculateaveragedaily, echo=FALSE}
+In the below plot we observe the average steps taken within the 5minute data within the day.
+
+```{r calculateaveragedaily}
 data_summary <- summarise(groupbydate, avgsteps=mean(steps))
 plot(data_summary, type="l", main = "Average daily steps within 5min interval", ylab = "Steps", xlab = "Date")
 ```
@@ -58,3 +60,44 @@ max5minterval <- filter(data_summary, avgsteps==max(data_summary$avgsteps))
 ```
 
 A maximmum number of average steps of `r max5minterval$avgsteps` occured on `r max5minterval$date`
+
+###Imputing missing values
+```{r calcmissingdata, echo=FALSE}
+missingData <- nrow(filter(data, is.na(data$steps)))
+```
+The original dataset comprises of `r missingData` samples in which a value was not provided, ie. NA. Such loss of data will skew our results a little.
+
+
+```{r replaceNafunc, echo=FALSE}
+replaceNa <- function(data, meansummarydata) {
+    # replace all "NA" values with the lookup mean data for the date 
+    # for which we have observed NA. If we have a mean value available
+    nadata = filter(data, is.na(data$steps))
+    for(i in 1:nrow(nadata)) {
+        founditem <- filter(meansummarydata, date==nadata$date[i])
+        if (nrow(founditem) > 0) {
+            nadata$steps[i] = founditem$avgsteps[1]
+        }
+        else {
+            nadata$steps[i] = 0
+        }
+            
+    }
+    
+    nadata
+}
+```
+
+```{r imputmissing}
+reformmeddata <- merge(filtered_data, replaceNa(data,data_summary ), all=TRUE)
+reformmeddata_summary <- summarise(group_by(reformmeddata,date), totalsteps=sum(steps))
+
+# display mean value having replaced all NAs where possible
+hist(reformmeddata_summary$totalsteps, main = "Total steps taken per day", xlab = "Steps")
+
+reformmeddata_meansteps <-  mean(reformmeddata_summary$totalsteps)
+reformmeddata_mediansteps <- median(reformmeddata_summary$totalsteps)
+```
+
+Having replaced where possible all NA values with corresponding mean values of the day, and 0 where we have a NA and no pre-existing mean observation for a date. We can observe overall mean number of steps now as `r reformmeddata_meansteps` and the median number of steps as `r reformmeddata_mediansteps`. It can be seen that then reformatted data seems to give slighly different values compared to earlier on, where the mean was `r meansteps` and median was `r mediansteps`. Notability the mean number of steps is lower.
+

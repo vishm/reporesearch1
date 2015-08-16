@@ -1,0 +1,48 @@
+---
+title: "Personal Movement Activity Moniting Report"
+author: "Vish Murden"
+date: "2015/08/17"
+output: html_document
+---
+
+# Introduction
+
+In this report we investigate the use of data as collected via an actvity monitoring device that captures personal movement. 
+
+The measurements are taken from a device that collects the number of steps taken over a 5 minute intervals through out the day. The data recording is taken over a 2 month period for a given anonymouse individual during the months of October - Novemeber 2012.
+
+The [data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) was originally sourced from the Coursera run Reproducible Reseach course, and a unzip copy retained in the data folder.
+
+```{r readdata, message=FALSE}
+library(dplyr)
+data <- read.csv("./data/activity.csv", colClasses=c("numeric", "character", "numeric"))
+data$date <- as.Date(data$date, "%Y-%m-%d")
+options(digits=2,scipen=999) 'display doubles to 2dp, + disable scientific notation
+
+```
+
+Using this data, we'll ask a number of question and derive relavent meaning.
+
+### What is mean total number of steps taken per day?
+
+```{r, echo=FALSE}
+filtered_data <- filter(data, data$steps !="NA")    # remove measurements where we have no data
+groupbydate <- group_by(filtered_data, date)
+data_summary <- summarise(groupbydate, totalsteps=sum(steps))
+```
+
+Below we can see a summary of the total number of steps taken per day where a recording was available.
+
+```{r}
+d <- as.Date(rep(data_summary$date,data_summary$totalsteps))
+hist(data_summary$totalsteps, main = "Total steps taken per day", xlab = "Steps")
+```
+
+
+```{r calculatemeanmedian, echo=FALSE}
+meansteps <-  mean(data_summary$totalsteps)
+mediansteps <- median(data_summary$totalsteps)
+```
+
+
+It can be sean that the mean value of steps take is `r meansteps` whilst the median is `r mediansteps`

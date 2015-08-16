@@ -1,20 +1,25 @@
 ---
-title: "Personal Movement Activity Moniting Report"
+title: "Reproducible Research: Peer Assessment 1"
+output:   html_document
+keep_md: true
 author: "Vish Murden"
 date: "2015/08/17"
-output: html_document
 ---
 
 # Introduction
 
-In this report we investigate the use of data as collected via an actvity monitoring device that captures personal movement. 
+In this report we investigate the use of data as collected via an actvity monitoring device that captures personal movement.
 
 The measurements are taken from a device that collects the number of steps taken over a 5 minute intervals through out the day. The data recording is taken over a 2 month period for a given anonymouse individual during the months of October - Novemeber 2012.
+
+## Loading and preprocessing the data
 
 The [data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) was originally sourced from the Coursera run Reproducible Reseach course, and a unzip copy retained in the data folder.
 
 ```{r readdata, message=FALSE}
 library(dplyr)
+library(lattice)
+
 data <- read.csv("./data/activity.csv", colClasses=c("numeric", "character", "numeric"))
 data$date <- as.Date(data$date, "%Y-%m-%d")
 options(digits=2,scipen=999) # display doubles to 2dp, + disable scientific notation
@@ -23,7 +28,7 @@ options(digits=2,scipen=999) # display doubles to 2dp, + disable scientific nota
 
 Using this data, we'll ask a number of question and derive relavent meaning.
 
-### What is mean total number of steps taken per day?
+## What is mean total number of steps taken per day?
 
 ```{r, echo=FALSE}
 filtered_data <- filter(data, data$steps !="NA")    # remove measurements where we have no data
@@ -46,7 +51,7 @@ mediansteps <- median(data_summary$totalsteps)
 
 It can be sean that the mean value of steps take is `r meansteps` whilst the median is `r mediansteps`
 
-###What is the average daily activity pattern?
+## What is the average daily activity pattern?
 
 In the below plot we observe the average steps taken within the 5minute data within the day.
 
@@ -61,7 +66,7 @@ max5minterval <- filter(data_summary, avgsteps==max(data_summary$avgsteps))
 
 A maximmum number of average steps of `r max5minterval$avgsteps` occured on `r max5minterval$date`
 
-###Imputing missing values
+## Imputing missing values
 ```{r calcmissingdata, echo=FALSE}
 missingData <- nrow(filter(data, is.na(data$steps)))
 ```
@@ -100,4 +105,23 @@ reformmeddata_mediansteps <- median(reformmeddata_summary$totalsteps)
 ```
 
 Having replaced where possible all NA values with corresponding mean values of the day, and 0 where we have a NA and no pre-existing mean observation for a date. We can observe overall mean number of steps now as `r reformmeddata_meansteps` and the median number of steps as `r reformmeddata_mediansteps`. It can be seen that then reformatted data seems to give slighly different values compared to earlier on, where the mean was `r meansteps` and median was `r mediansteps`. Notability the mean number of steps is lower.
+
+## Are there differences in activity patterns between weekdays and weekends?
+```{r createweekdayfactor, echo=FALSE}
+# first need to figure what dates occured on Weekend or weekday, assign T/F
+reformmeddata_summary <- summarise(group_by(reformmeddata,date), averagesteps=mean(steps))
+weekday_reformmeddata_summary <- mutate(reformmeddata_summary, Weekday=weekdays(reformmeddata_summary$date, abbreviate = TRUE) %in% c("Mon", "Tue", "Wed", "Thu", "Fri"))
+
+# now apply more relevant label instead of T/F
+weekday_reformmeddata_summary$period <- factor(weekday_reformmeddata_summary$Weekday, levels = c(TRUE, FALSE), labels = c("Weekday", "Weekend"))
+```
+
+Below is a plot of average daily steps per day, broken out by average steps taken in the weekend and weekday.
+
+```{r displayplot}
+xyplot(averagesteps ~ date | period, data = weekday_reformmeddata_summary, layout = c(1,2), type = "l")
+```
+
+
+Looking at the plot, we cannot see any discernable difference between foot activities between the varied periods. 
 

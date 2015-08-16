@@ -17,7 +17,7 @@ The [data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) 
 library(dplyr)
 data <- read.csv("./data/activity.csv", colClasses=c("numeric", "character", "numeric"))
 data$date <- as.Date(data$date, "%Y-%m-%d")
-options(digits=2,scipen=999) 'display doubles to 2dp, + disable scientific notation
+options(digits=2,scipen=999) # display doubles to 2dp, + disable scientific notation
 
 ```
 
@@ -28,13 +28,12 @@ Using this data, we'll ask a number of question and derive relavent meaning.
 ```{r, echo=FALSE}
 filtered_data <- filter(data, data$steps !="NA")    # remove measurements where we have no data
 groupbydate <- group_by(filtered_data, date)
-data_summary <- summarise(groupbydate, totalsteps=sum(steps))
 ```
 
 Below we can see a summary of the total number of steps taken per day where a recording was available.
 
 ```{r}
-d <- as.Date(rep(data_summary$date,data_summary$totalsteps))
+data_summary <- summarise(groupbydate, totalsteps=sum(steps))
 hist(data_summary$totalsteps, main = "Total steps taken per day", xlab = "Steps")
 ```
 
@@ -46,3 +45,16 @@ mediansteps <- median(data_summary$totalsteps)
 
 
 It can be sean that the mean value of steps take is `r meansteps` whilst the median is `r mediansteps`
+
+###What is the average daily activity pattern?
+
+```{r calculateaveragedaily, echo=FALSE}
+data_summary <- summarise(groupbydate, avgsteps=mean(steps))
+plot(data_summary, type="l", main = "Average daily steps within 5min interval", ylab = "Steps", xlab = "Date")
+```
+
+```{r max5minsteps, echo=FALSE}
+max5minterval <- filter(data_summary, avgsteps==max(data_summary$avgsteps))                        
+```
+
+A maximmum number of average steps of `r max5minterval$avgsteps` occured on `r max5minterval$date`
